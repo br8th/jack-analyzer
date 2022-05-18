@@ -1,0 +1,296 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Xml;
+
+namespace JackAnalyzer
+{
+    internal class JackTokenizer
+    {
+        public enum Token
+        {
+            KEYWORD = 0,
+            SYMBOL = 1,
+            IDENTIFIER = 2,
+            INT_CONST = 3,
+            STRING_CONST = 4,
+        }
+
+        public enum KeyWord
+        {
+            CLASS,
+            METHOD,
+            FUNCTION,
+            CONSTRUCTOR,
+            INT,
+            BOOLEAN,
+            CHAR,
+            VOID,
+            VAR,
+            STATIC,
+            FIELD,
+            LET,
+            DO,
+            IF,
+            ELSE,
+            WHILE,
+            RETURN,
+            TRUE,
+            FALSE,
+            NULL,
+            THIS,
+        }
+
+        private HashSet<string> keywords = new HashSet<string>
+        {
+             "class", "method", "function", "constructor", "int", "boolean", "char", "void", "var", "static", "field", "let", "do", "if", "else", "while", "return", "true", "false", "null", "this"
+        };
+
+        private HashSet<char> symbols = new HashSet<char> {
+            '{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~'
+        };
+
+        //StreamReader inputStreamReader;
+        public FileStream fs;
+        string currentToken;
+        private long currentFsPosition; // The current position of the fileStream;
+
+        /* Opens the input file/stream and gets ready to tokenize it*/
+        public JackTokenizer(string inputFilePath)
+        {
+            //inputStreamReader = new StreamReader(inputFilePath);
+            fs = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
+            currentFsPosition = 0;
+            Advance(); // Move to initialize currentToken
+        }
+
+        /* Do we have more tokens in the input? */
+        public bool HasMoreTokens()
+        {
+            return fs.Position < fs.Length;
+        }
+
+        /* Gets the next token from the input and makes it the current token */
+        public void Advance()
+        {
+            if (!fs.CanSeek)
+            {
+                // https://www.youtube.com/watch?v=-Jc_ONhBC_E
+                throw new Exception("Hold up, wait a minute. Something ain't right.");
+            }
+
+            
+            fs.Seek(currentFsPosition, SeekOrigin.Begin);
+
+            char c = (char) fs.ReadByte();
+
+            // Skip \r, \n, whitespace
+            if (Char.IsWhiteSpace(c) && HasMoreTokens())
+            {
+                int numSpaces = 0;
+
+                while (Char.IsWhiteSpace(c))
+                {
+                    numSpaces++;
+                    c = (char) fs.ReadByte();
+                }
+
+                currentFsPosition = fs.Position - 1;
+                Advance();
+                return;
+            }
+
+            // Skip single line comments
+            if (c == '/')
+            {
+                var temp = (char) fs.ReadByte();
+
+                // This is the symbol '/' followed by whitespace / a different symbol
+                if (temp != '/')
+                {
+                    currentToken = "/";
+                    currentFsPosition = fs.Position;
+                    return;
+                }
+
+                Console.WriteLine("skip single line comments:");
+                while (c != '\n' && HasMoreTokens())
+                {
+                    c = (char) fs.ReadByte();
+                }
+
+                currentFsPosition = fs.Position;
+                Advance();
+                return;
+            } 
+
+            // Skip multi line comments
+            if (c == '/' && (char) fs.ReadByte() == '*')
+            {
+                fs.Seek(fs.Position - 1, SeekOrigin.Current);
+
+                Console.WriteLine("skip multi-line comments:");
+                while (c != '/' && HasMoreTokens())
+                {
+                    c = (char) fs.ReadByte();
+                }
+
+                currentFsPosition = fs.Position;
+                Console.WriteLine($"After skip multiline: {c}");
+                Advance();
+                return;
+            }
+
+            // Current token is symbol
+            if (symbols.Contains(c)) 
+            {
+                Console.WriteLine($"token is symbol:{c}");
+                currentToken = c.ToString();
+                Console.WriteLine($"currentToken (symbol):x{currentToken}x");
+                currentFsPosition = fs.Position;
+                return;
+            }
+
+            byte[] buffer;
+
+            // Current token is a string constant
+            if (c == '"')
+            {
+                int strLength = 2;
+                c = (char) fs.ReadByte();
+
+                while (c  != '"')
+                {
+                    strLength++;
+                    c = (char) fs.ReadByte();
+                }
+
+                buffer = new byte[strLength];
+                fs.Seek(-(strLength), SeekOrigin.Current);
+                fs.Read(buffer, 0, strLength);
+
+                currentFsPosition = fs.Position;
+                currentToken = Encoding.UTF8.GetString(buffer);
+                Console.WriteLine($"currentToken (stringConstant):x{currentToken}x");
+                return;
+            }
+
+            // 12123
+            if (Char.IsDigit(c))
+            {
+                int numLength = 0;
+
+                // Read until we find a space or semicolon -> integerConstant
+                while (c != ' ' && !symbols.Contains(c))
+                {
+                    numLength++;
+                    c = (char) fs.ReadByte();
+                }
+
+                buffer = new byte[numLength];
+                fs.Seek(-(numLength + 1), SeekOrigin.Current);
+                fs.Read(buffer, 0, numLength);
+
+                currentFsPosition = fs.Position;
+                currentToken = Encoding.UTF8.GetString(buffer);
+                Console.WriteLine($"currentToken (numConstant):x{currentToken}x");
+                return; 
+            }
+            
+            // keywords and identifiers ([class] || [_varName, var_name, var1])
+            if (Char.IsLetter(c) ||  c == '_')
+            {
+                Console.WriteLine($"isLetter:{c}");
+                // Read until we find a space, ';' or a '(' -> identifier/keyword
+                int strLength = 0;
+
+                while (c != ' ' && !symbols.Contains(c))
+                {
+                    strLength++;
+                    c = (char) fs.ReadByte();
+                }
+
+                buffer = new byte[strLength];
+                fs.Seek(-(strLength + 1), SeekOrigin.Current);
+                fs.Read(buffer, 0, strLength);
+
+                currentFsPosition = fs.Position;
+                currentToken = Encoding.UTF8.GetString(buffer);
+                Console.WriteLine($"currentToken (kw/identifier):x{currentToken}x");
+                return; 
+            }
+
+        }
+        
+        /* Returns the type of the current token */
+        public Token TokenType()
+        {
+            if (currentToken.Length == 1 && symbols.Contains(currentToken.ToCharArray()[0]))
+            {
+                return Token.SYMBOL;
+            }
+
+            if (keywords.Contains(currentToken))
+            {
+                return Token.KEYWORD;
+            }
+
+            if (int.TryParse(currentToken, out _))
+            {
+                return Token.INT_CONST;
+            }
+
+            if (currentToken.StartsWith("\""))
+            {
+                return Token.STRING_CONST;
+            }
+
+            // TODO: Use regex to figure out if it's actually an identifier.
+            // _var_name, varName1, 1invalidVarname, var__name1;
+            // [A-Za-z_][A-Za-z0-9_]
+
+            return Token.IDENTIFIER;
+        }
+
+        /* Returns the keyword which is the current token.
+         * Called only when current tokentype == Keyword */
+        public string GetKeyWord()
+        {
+            return " " + currentToken + " ";
+        }
+
+        /* Returns the character which is the current token.
+         * Called only when current tokentype == Symbol */
+        private char Symbol()
+        {
+            return currentToken.ToCharArray()[0];
+        }
+
+        /* Returns the String which is the current token.
+         * Called only when current tokentype == Identifier */
+        public String Identifier()
+        {
+            return " " + currentToken + " ";
+        }
+
+        /* Returns the Integer which is the current token.
+         * Called only when current tokentype == Int_Const */
+        public int IntVal()
+        {
+            return Int32.Parse(currentToken);
+        }
+
+        /* Returns the String which is the current token.
+         * Called only when current tokentype == String_Const */
+        public String StringVal()
+        {
+            return " " + currentToken.Replace("\"", "") + " ";
+        }
+
+
+
+
+
+    }
+}
