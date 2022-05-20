@@ -51,15 +51,13 @@ namespace JackAnalyzer
             '{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~'
         };
 
-        //StreamReader inputStreamReader;
         public FileStream fs;
         string currentToken;
-        private long currentFsPosition; // The current position of the fileStream;
+        private long currentFsPosition; 
 
         /* Opens the input file/stream and gets ready to tokenize it*/
         public JackTokenizer(string inputFilePath)
         {
-            //inputStreamReader = new StreamReader(inputFilePath);
             fs = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
             currentFsPosition = 0;
             Advance(); // Move to initialize currentToken
@@ -101,53 +99,63 @@ namespace JackAnalyzer
                 return;
             }
 
-            // Skip single line comments
+            // Handle comments
             if (c == '/')
             {
                 var temp = (char) fs.ReadByte();
 
                 // This is the symbol '/' followed by whitespace / a different symbol
-                if (temp != '/')
+                if (temp != '/' && temp != '*')
                 {
                     currentToken = "/";
                     currentFsPosition = fs.Position;
                     return;
                 }
 
-                Console.WriteLine("skip single line comments:");
-                while (c != '\n' && HasMoreTokens())
+                // Single line comments
+                if (temp == '/')
                 {
-                    c = (char) fs.ReadByte();
+                    while (temp != '\n' && HasMoreTokens())
+                    {
+                        temp = (char) fs.ReadByte();
+                    }
+
+                    currentFsPosition = fs.Position - 1;
+                    Advance();
+                    return;
                 }
 
-                currentFsPosition = fs.Position;
-                Advance();
-                return;
-            } 
-
-            // Skip multi line comments
-            if (c == '/' && (char) fs.ReadByte() == '*')
-            {
-                fs.Seek(fs.Position - 1, SeekOrigin.Current);
-
-                Console.WriteLine("skip multi-line comments:");
-                while (c != '/' && HasMoreTokens())
+                // Skip multi line comments
+                if (temp == '*')
                 {
-                    c = (char) fs.ReadByte();
+                    keepSearching:
+
+                    while (temp != '*' && HasMoreTokens())
+                    {
+                        temp = (char) fs.ReadByte();
+                    }
+
+                    temp = (char) fs.ReadByte();
+
+                    if (temp != '/')
+                    {
+                        // TODO: Yes, yes, goto is terrible. This should be refactored into a separate method.
+                        goto keepSearching;
+                    } else
+                    {
+                        currentFsPosition = fs.Position;
+                        Advance();
+                    }
+
+                    return;
                 }
 
-                currentFsPosition = fs.Position;
-                Console.WriteLine($"After skip multiline: {c}");
-                Advance();
-                return;
             }
 
             // Current token is symbol
             if (symbols.Contains(c)) 
             {
-                Console.WriteLine($"token is symbol:{c}");
                 currentToken = c.ToString();
-                Console.WriteLine($"currentToken (symbol):x{currentToken}x");
                 currentFsPosition = fs.Position;
                 return;
             }
@@ -172,37 +180,13 @@ namespace JackAnalyzer
 
                 currentFsPosition = fs.Position;
                 currentToken = Encoding.UTF8.GetString(buffer);
-                Console.WriteLine($"currentToken (stringConstant):x{currentToken}x");
                 return;
             }
 
-            // 12123
-            if (Char.IsDigit(c))
-            {
-                int numLength = 0;
-
-                // Read until we find a space or semicolon -> integerConstant
-                while (c != ' ' && !symbols.Contains(c))
-                {
-                    numLength++;
-                    c = (char) fs.ReadByte();
-                }
-
-                buffer = new byte[numLength];
-                fs.Seek(-(numLength + 1), SeekOrigin.Current);
-                fs.Read(buffer, 0, numLength);
-
-                currentFsPosition = fs.Position;
-                currentToken = Encoding.UTF8.GetString(buffer);
-                Console.WriteLine($"currentToken (numConstant):x{currentToken}x");
-                return; 
-            }
-            
             // keywords and identifiers ([class] || [_varName, var_name, var1])
-            if (Char.IsLetter(c) ||  c == '_')
+            if (Char.IsLetter(c) ||  c == '_' || Char.IsDigit(c))
             {
-                Console.WriteLine($"isLetter:{c}");
-                // Read until we find a space, ';' or a '(' -> identifier/keyword
+                // Read until we find a space or symbol
                 int strLength = 0;
 
                 while (c != ' ' && !symbols.Contains(c))
@@ -217,7 +201,6 @@ namespace JackAnalyzer
 
                 currentFsPosition = fs.Position;
                 currentToken = Encoding.UTF8.GetString(buffer);
-                Console.WriteLine($"currentToken (kw/identifier):x{currentToken}x");
                 return; 
             }
 
@@ -225,6 +208,7 @@ namespace JackAnalyzer
         
         /* Returns the type of the current token */
         public Token TokenType()
+
         {
             if (currentToken.Length == 1 && symbols.Contains(currentToken.ToCharArray()[0]))
             {
@@ -287,10 +271,6 @@ namespace JackAnalyzer
         {
             return " " + currentToken.Replace("\"", "") + " ";
         }
-
-
-
-
 
     }
 }

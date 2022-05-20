@@ -21,8 +21,6 @@ namespace JackAnalyzer
             foreach (string fileName in filesInDir)
             {
                 JackTokenizer tokenizer = new JackTokenizer(fileName);
-
-                // TODO: Create output file (file.xml) and prepare it for writing
                 CompilationEngine engine = new CompilationEngine(tokenizer,  fileName.Replace(".jack", ".xml"));
                 engine.CompileClass();
                 engine.ShutDown();

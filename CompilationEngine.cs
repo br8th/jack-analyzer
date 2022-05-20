@@ -6,22 +6,17 @@ namespace JackAnalyzer
     internal class CompilationEngine
     {
         private JackTokenizer tokenizer;
-        //private StreamReader inputStreamReader; 
-        //private StreamWriter outputStreamWriter;
         private XmlWriter xw;
 
         public CompilationEngine(JackTokenizer tokenizer, string outputFilePath)
         {
-            //inputStreamReader = new StreamReader(inputFilePath);
-            //outputStreamWriter = new StreamWriter(outputFilePath);
-
             var settings = new XmlWriterSettings()
             {
                 Indent = true,
                 OmitXmlDeclaration = true,
                 ConformanceLevel = ConformanceLevel.Fragment,
-                //NewLineChars = "--",
-                //NewLineOnAttributes = true,
+                IndentChars = "",
+                Encoding = new System.Text.UTF8Encoding(false)
             };
 
             xw = XmlWriter.Create(outputFilePath, settings);
@@ -32,7 +27,6 @@ namespace JackAnalyzer
         public void CompileClass()
         {
             xw.WriteStartElement("tokens");
-
             while (tokenizer.HasMoreTokens())
             {
                 switch (tokenizer.TokenType())
@@ -70,6 +64,7 @@ namespace JackAnalyzer
             }
 
             xw.WriteEndElement();
+            xw.WriteString("\n");
         }
 
         // Compiles a static/field declaration
@@ -154,7 +149,7 @@ namespace JackAnalyzer
         public void ShutDown()
         {
             tokenizer.fs.Close();
-            xw.Dispose();
+            xw.Close();
         }
     }
 }
