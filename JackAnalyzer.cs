@@ -4,7 +4,7 @@ using System.IO;
 namespace JackAnalyzer
 {
     /* Accepts a .jack file and compiles it into an .xml file */
-    internal class JackAnalyzer
+    public class JackAnalyzer
     {
         static void Main(string[] args)
         {

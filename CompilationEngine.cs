@@ -3,7 +3,7 @@ using System.Xml;
 
 namespace JackAnalyzer
 {
-    internal class CompilationEngine
+    public class CompilationEngine
     {
         private JackTokenizer tokenizer;
         private XmlWriter xw;

@@ -6,7 +6,7 @@ using System.Xml;
 
 namespace JackAnalyzer
 {
-    internal class JackTokenizer
+    public class JackTokenizer
     {
         public enum Token
         {
@@ -53,7 +53,7 @@ namespace JackAnalyzer
 
         public FileStream fs;
         string currentToken;
-        private long currentFsPosition; 
+        private long currentFsPosition;
 
         /* Opens the input file/stream and gets ready to tokenize it*/
         public JackTokenizer(string inputFilePath)
@@ -78,7 +78,7 @@ namespace JackAnalyzer
                 throw new Exception("Hold up, wait a minute. Something ain't right.");
             }
 
-            
+
             fs.Seek(currentFsPosition, SeekOrigin.Begin);
 
             char c = (char) fs.ReadByte();
@@ -153,7 +153,7 @@ namespace JackAnalyzer
             }
 
             // Current token is symbol
-            if (symbols.Contains(c)) 
+            if (symbols.Contains(c))
             {
                 currentToken = c.ToString();
                 currentFsPosition = fs.Position;
@@ -201,11 +201,11 @@ namespace JackAnalyzer
 
                 currentFsPosition = fs.Position;
                 currentToken = Encoding.UTF8.GetString(buffer);
-                return; 
+                return;
             }
 
         }
-        
+
         /* Returns the type of the current token */
         public Token TokenType()
 
