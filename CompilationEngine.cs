@@ -88,7 +88,7 @@ namespace JackAnalyzer
         // Compiles a var declaration
         private void CompileVarDec()
         {
-        
+
         }
 
         // Compiles a sequence of statements
@@ -100,7 +100,7 @@ namespace JackAnalyzer
         // Compiles a 'do' statement
         private void CompileDo()
         {
-            
+
         }
 
         // Compiles a 'let' statement

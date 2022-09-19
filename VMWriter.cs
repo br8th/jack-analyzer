@@ -75,7 +75,7 @@ namespace JackAnalyzer
         {
 
         }
-        
+
         private void WriteCall(String name, int nArgs)
         {
 
@@ -85,10 +85,10 @@ namespace JackAnalyzer
         {
 
         }
-        
+
         private void WriteReturn()
         {
-            
+
         }
 
 

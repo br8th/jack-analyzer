@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "JackAnalyzer": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\vincentkyalo\\OneDrive\\Nand2Tetris\\projects\\09\\Square\""
+    }
+  }
+}
