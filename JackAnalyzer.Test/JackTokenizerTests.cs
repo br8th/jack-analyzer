@@ -5,10 +5,10 @@ namespace JackAnalyzer.Test
     [TestClass]
     public class JackTokenizerTests
     {
-        private string filePath = "D:\\Code-Personal\\JackAnalyzer\\JackAnalyzer.Test\\Files\\HelloWorld\\Main.jack";
+        private string filePath = "D:\\Code\\JackAnalyzer\\JackAnalyzer.Test\\Files\\HelloWorld\\Main.jack";
 
-        private string squareDir = "D:\\Code-Personal\\JackAnalyzer\\JackAnalyzer.Test\\Files\\Square";
-        private string helloDir = "D:\\Code-Personal\\JackAnalyzer\\JackAnalyzer.Test\\Files\\HelloWorld";
+        private string squareDir = "D:\\Code\\JackAnalyzer\\JackAnalyzer.Test\\Files\\Square";
+        private string helloDir = "D:\\Code\\JackAnalyzer\\JackAnalyzer.Test\\Files\\HelloWorld";
 
         private IEnumerable<object[]> TestDirs =>
             new List<string[]>
@@ -58,14 +58,15 @@ namespace JackAnalyzer.Test
             engine.ShutDown();
 
             var outputFile = $"{squareDir}\\Main.xml";
-            var expectedFile = $"{squareDir}\\MainT.xml";
+            var expectedFile = $"{squareDir}\\MainP.xml";
 
             Assert.IsTrue(TestUtils.FilesAreEqual(outputFile, expectedFile));
         }
 
         [DataTestMethod]
-        [DataRow("D:\\Code-Personal\\JackAnalyzer\\JackAnalyzer.Test\\Files\\Square")]
-        [DataRow("D:\\Code-Personal\\JackAnalyzer\\JackAnalyzer.Test\\Files\\ArrayTest")]
+        [DataRow("D:\\Code\\JackAnalyzer\\JackAnalyzer.Test\\Files\\Square")]
+        [DataRow("D:\\Code\\JackAnalyzer\\JackAnalyzer.Test\\Files\\ArrayTest")]
+        [DataRow("D:\\Code\\JackAnalyzer\\JackAnalyzer.Test\\Files\\ExpressionLessSquare")]
         public void Tokenizer_Square_Dir_Translates(string dirName)
         {
             var filesInDir = Directory.GetFiles(dirName, "*.jack");
@@ -78,7 +79,7 @@ namespace JackAnalyzer.Test
                 engine.CompileClass();
                 engine.ShutDown();
 
-                var expectedFile = outputFileName.Replace(".xml", "T.xml");
+                var expectedFile = outputFileName.Replace(".xml", "P.xml");
 
                 Assert.IsTrue(TestUtils.FilesAreEqual(outputFileName, expectedFile));
             }

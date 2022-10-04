@@ -42,7 +42,7 @@ namespace JackAnalyzer
             THIS,
         }
 
-        private HashSet<string> keywords = new HashSet<string>
+        internal static HashSet<string> keywords = new HashSet<string>
         {
              "class", "method", "function", "constructor", "int", "boolean", "char", "void", "var", "static", "field", "let", "do", "if", "else", "while", "return", "true", "false", "null", "this"
         };
@@ -52,7 +52,7 @@ namespace JackAnalyzer
         };
 
         public FileStream fs;
-        string currentToken;
+        public string currentToken;
         private long currentFsPosition;
 
         /* Opens the input file/stream and gets ready to tokenize it*/
@@ -208,7 +208,6 @@ namespace JackAnalyzer
 
         /* Returns the type of the current token */
         public Token TokenType()
-
         {
             if (currentToken.Length == 1 && symbols.Contains(currentToken.ToCharArray()[0]))
             {
@@ -232,7 +231,7 @@ namespace JackAnalyzer
 
             // TODO: Use regex to figure out if it's actually an identifier.
             // _var_name, varName1, 1invalidVarname, var__name1;
-            // [A-Za-z_][A-Za-z0-9_]
+            // [A-Za-z_][A-Za-z0-9\_]
 
             return Token.IDENTIFIER;
         }
