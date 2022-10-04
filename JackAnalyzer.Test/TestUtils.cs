@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,6 +55,8 @@ namespace JackAnalyzer.Test
                 file2byte = fs2.ReadByte();
             }
             while ((file1byte == file2byte) && (file1byte != -1));
+
+            //Debug.Assert(file1byte == file2byte, $"Not equal at {file1byte}");
 
             // Close the files.
             fs1.Close();
